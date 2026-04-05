@@ -45,14 +45,22 @@
       flex-wrap: wrap;
     }
 
-    #last-updated-label {
+    .updated-badge {
       background: rgba(255,255,255,0.1);
       border: 1px solid rgba(255,255,255,0.2);
       border-radius: 20px;
       padding: 0.3rem 0.85rem;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: #cbd5e1;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .updated-badge .badge-label {
+      color: #94a3b8;
+      font-size: 0.72rem;
     }
 
     #refresh-btn {
@@ -301,7 +309,14 @@
 <header>
   <h1>קרנות כספיות — <span class="accent">השוואה</span></h1>
   <div class="header-right">
-    <span id="last-updated-label" class="hidden"></span>
+    <span id="funder-updated" class="updated-badge hidden">
+      <span class="badge-label">עדכון אחרון של פאנדר:</span>
+      <span id="funder-updated-val">—</span>
+    </span>
+    <span id="page-updated" class="updated-badge hidden">
+      <span class="badge-label">העמוד עודכן:</span>
+      <span id="page-updated-val">—</span>
+    </span>
     <button id="refresh-btn" onclick="loadData()">
       <span class="spin">⟳</span> רענן
     </button>
@@ -410,6 +425,7 @@
         const mgmtFee   = f.nihol  ?? 0;
         const addRate   = f.hosafa ?? 0;
         return {
+          fundNum:              f.fundNum,
           name:                 f.fundName,
           daily:                f['1day']      ?? 0,
           from_start_of_month:  f.monthBegin,
@@ -443,8 +459,8 @@
                    : 'zer';
 
       const cells = [
-        { extra: 'col-rank', text: String(i + 1) },
-        { extra: 'col-name', text: f.name },
+        { extra: 'col-rank', text: String(i + 1), copyVal: String(i + 1) },
+        { extra: 'col-name', text: f.name,         copyVal: String(f.fundNum), toastMsg: 'מספר קרן: ' + f.fundNum + ' — הועתק', title: 'מספר קרן: ' + f.fundNum + ' — לחץ להעתקה' },
         { extra: '',         text: fmt(f.daily) },
         { extra: '',         text: fmt(f.from_start_of_month) },
         { extra: '',         text: fmt(f.from_start_of_year) },
@@ -454,11 +470,14 @@
         { extra: 'col-net ' + netCls, text: fmt(f.net_monthly) },
       ];
 
-      cells.forEach(({ extra, text }) => {
+      cells.forEach(({ extra, text, copyVal, toastMsg, title }) => {
         const td = document.createElement('td');
         if (extra) td.className = extra.trim();
         td.textContent = text;
-        td.addEventListener('click', () => copyCell(td, text));
+        if (title) td.title = title;
+        const val = copyVal ?? text;
+        const msg = toastMsg ?? ('הועתק: ' + val);
+        td.addEventListener('click', () => copyCell(td, val, msg));
         tr.appendChild(td);
       });
 
@@ -469,29 +488,30 @@
     tbody.appendChild(fragment);
   }
 
-  function setLastUpdated(funds) {
-    // Find the most recent lastUpdate across all funds
-    const dates = funds
-      .map(f => f.lastUpdate)
-      .filter(Boolean)
-      .sort();
+  function setFunderUpdated(funds) {
+    const dates = funds.map(f => f.lastUpdate).filter(Boolean).sort();
     if (!dates.length) return;
     const raw = dates[dates.length - 1]; // most recent YYYY-MM-DD
     const parts = raw.split('-');
     const display = parts.length === 3
       ? parts[2] + '/' + parts[1] + '/' + parts[0]
       : raw;
-    const el = document.getElementById('last-updated-label');
-    el.textContent = 'עודכן לאחרונה: ' + display;
-    el.classList.remove('hidden');
+    document.getElementById('funder-updated-val').textContent = display;
+    document.getElementById('funder-updated').classList.remove('hidden');
+  }
+
+  function setPageUpdated() {
+    document.getElementById('page-updated-val').textContent =
+      new Date().toLocaleTimeString('he-IL');
+    document.getElementById('page-updated').classList.remove('hidden');
   }
 
   // ── Copy + toast ──────────────────────────────────────────────
-  function copyCell(td, value) {
+  function copyCell(td, value, msg) {
     navigator.clipboard.writeText(value).then(() => {
       td.classList.add('flashing');
       td.addEventListener('animationend', () => td.classList.remove('flashing'), { once: true });
-      showToast('הועתק: ' + value);
+      showToast(msg ?? ('הועתק: ' + value));
     }).catch(() => showToast('ההעתקה נכשלה'));
   }
 
@@ -531,6 +551,7 @@
     document.getElementById('table-container').classList.remove('hidden');
     document.getElementById('fund-count').textContent =
       funds.length + ' קרנות מוצגות';
+    setPageUpdated();
   }
 
   // ── Entry point ───────────────────────────────────────────────
@@ -541,7 +562,7 @@
       const raw   = extractKaspitData(html);
       const funds = processData(raw.x);
       if (!funds.length) throw new Error('לא נמצאו קרנות פעילות בנתוני המקור.');
-      setLastUpdated(funds);
+      setFunderUpdated(funds);
       renderTable(funds);
       showTable(funds);
     } catch (e) {
