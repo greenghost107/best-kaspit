@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>קרנות כספיות — השוואה</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f8;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0f1b2d 0%, #1a3a5c 100%);
+      color: white;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    header h1 .accent { color: #60a5fa; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    #last-updated-label {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
+    #refresh-btn {
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 6px;
+      padding: 0.35rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: background 0.18s, border-color 0.18s;
+      white-space: nowrap;
+    }
+
+    #refresh-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.6); }
+    #refresh-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    #refresh-btn .spin { display: inline-block; }
+    #refresh-btn.loading .spin { animation: spin 0.7s linear infinite; }
+
+    /* ── Main ────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .formula-bar {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.7rem 1.1rem;
+      margin-bottom: 1.1rem;
+      font-size: 0.83rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .formula-bar code {
+      background: #f1f5f9;
+      border-radius: 4px;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.83rem;
+      color: #1e3a5f;
+    }
+
+    /* ── Loading state ───────────────────────────────────── */
+    #status-area {
+      text-align: center;
+      padding: 4rem 1rem;
+    }
+
+    .spinner-ring {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #dbeafe;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #status-area p { color: #64748b; font-size: 0.95rem; }
+
+    /* ── Error state ─────────────────────────────────────── */
+    #error-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 1.5rem 2rem;
+      color: #991b1b;
+      max-width: 580px;
+      margin: 2rem auto;
+    }
+
+    #error-box strong { display: block; font-size: 1rem; margin-bottom: 0.5rem; }
+    #error-box p { font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem; }
+
+    #error-box button {
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 1.1rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: background 0.18s;
+    }
+
+    #error-box button:hover { background: #b91c1c; }
+
+    /* ── Table container ─────────────────────────────────── */
+    #table-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      min-width: 900px;
+    }
+
+    /* ── Table header ────────────────────────────────────── */
+    thead tr {
+      background: #0f1b2d;
+    }
+
+    thead th {
+      color: #e2e8f0;
+      padding: 0.75rem 0.85rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      border-left: 1px solid rgba(255,255,255,0.07);
+      user-select: none;
+    }
+
+    thead th.col-name { text-align: right; }
+    thead th.col-rank { width: 40px; }
+    thead th.col-net  { color: #93c5fd; background: #0c1829; }
+
+    /* ── Table body ──────────────────────────────────────── */
+    tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    tbody tr:nth-child(even) { background: #f8faff; }
+    tbody tr:nth-child(odd)  { background: #ffffff; }
+    tbody tr:hover           { background: #eff6ff !important; }
+
+    tbody td {
+      padding: 0.6rem 0.85rem;
+      text-align: center;
+      border-left: 1px solid #f1f5f9;
+      user-select: none;
+    }
+
+    tbody td.col-name {
+      text-align: right;
+      font-weight: 500;
+      color: #1e293b;
+      min-width: 210px;
+    }
+
+    tbody td.col-rank {
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    tbody td.col-net {
+      font-weight: 700;
+      font-size: 0.9rem;
+      background: #f8faff;
+    }
+
+    /* Net monthly colour coding */
+    .pos { color: #166534; }
+    .neg { color: #991b1b; }
+    .zer { color: #64748b; }
+
+    /* Top 3 highlight */
+    tbody tr:nth-child(1) td.col-net { border-right: 3px solid #f59e0b; }
+    tbody tr:nth-child(2) td.col-net { border-right: 3px solid #9ca3af; }
+    tbody tr:nth-child(3) td.col-net { border-right: 3px solid #b45309; }
+
+    /* Click-to-copy flash */
+    @keyframes flash {
+      0%   { background: #bfdbfe; }
+      100% { background: inherit; }
+    }
+
+    td.flashing { animation: flash 0.45s ease; }
+
+    /* ── Fund count ──────────────────────────────────────── */
+    .fund-count {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      padding: 0.6rem 0;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 1.75rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: #1e293b;
+      color: white;
+      padding: 0.55rem 1.3rem;
+      border-radius: 24px;
+      font-size: 0.82rem;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.25rem 1rem;
+      color: #94a3b8;
+      font-size: 0.78rem;
+    }
+
+    footer a { color: #3b82f6; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Utility ─────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header { padding: 0.9rem 1rem; }
+      header h1 { font-size: 1.15rem; }
+      main { padding: 0.75rem; }
+      .formula-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>קרנות כספיות — <span class="accent">השוואה</span></h1>
+  <div class="header-right">
+    <span id="last-updated-label" class="hidden"></span>
+    <button id="refresh-btn" onclick="loadData()">
+      <span class="spin">⟳</span> רענן
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="formula-bar">
+    ℹ️ ממוין לפי:
+    <code>נטו חודשי = תשואה חודשית − דמי ניהול − שיעור הוספה</code>
+    &nbsp;·&nbsp; לחיצה על תא מעתיקה את הערך ללוח
+  </div>
+
+  <!-- Loading -->
+  <div id="status-area">
+    <div class="spinner-ring"></div>
+    <p>טוען נתונים מ-funder.co.il…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error-box" class="hidden">
+    <strong>שגיאה בטעינת הנתונים</strong>
+    <p id="error-msg"></p>
+    <button onclick="loadData()">נסה שוב</button>
+  </div>
+
+  <!-- Table -->
+  <div id="table-container" class="hidden">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-name">שם קרן</th>
+            <th>יומי %</th>
+            <th>מתחילת החודש %</th>
+            <th>מתחילת השנה %</th>
+            <th>תשואה חודשית %</th>
+            <th>דמי ניהול %</th>
+            <th>שיעור הוספה %</th>
+            <th class="col-net">נטו חודשי %</th>
+          </tr>
+        </thead>
+        <tbody id="fund-tbody"></tbody>
+      </table>
+    </div>
+    <p id="fund-count" class="fund-count"></p>
+  </div>
+</main>
+
+<footer>
+  מקור הנתונים: <a href="https://www.funder.co.il/kaspit" target="_blank" rel="noopener noreferrer">funder.co.il/kaspit</a>
+  &nbsp;·&nbsp; הנתונים מוצגים למטרות מידע בלבד ואינם מהווים ייעוץ השקעות
+</footer>
+
+<div id="toast"></div>
+
+<script>
+  'use strict';
+
+  // ── Config ────────────────────────────────────────────────────
+  const SOURCE_URL = 'https://www.funder.co.il/kaspit';
+  const PROXIES = [
+    'https://corsproxy.io/?url=' + encodeURIComponent(SOURCE_URL),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(SOURCE_URL),
+  ];
+  const FETCH_TIMEOUT_MS = 20000;
+
+  // ── Fetch ─────────────────────────────────────────────────────
+  async function fetchHTML() {
+    let lastErr;
+    for (const proxy of PROXIES) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      try {
+        const res = await fetch(proxy, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.text();
+      } catch (e) {
+        clearTimeout(timer);
+        lastErr = e;
+      }
+    }
+    throw new Error(
+      'כל שרתי ה-proxy נכשלו. ייתכן שיש בעיית חסימה בדפדפן שלך. ' +
+      '(' + (lastErr?.message ?? 'שגיאה לא ידועה') + ')'
+    );
+  }
+
+  function extractKaspitData(html) {
+    const idx = html.indexOf('var kaspitData');
+    if (idx === -1) throw new Error('לא נמצא משתנה kaspitData בדף המקור.');
+    const jsonStart = html.indexOf('{', idx);
+    const jsonEnd   = html.indexOf('};', jsonStart);
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('לא ניתן לפרסר את נתוני הקרנות.');
+    return JSON.parse(html.slice(jsonStart, jsonEnd + 1));
+  }
+
+  // ── Process ───────────────────────────────────────────────────
+  function processData(rawFunds) {
+    return rawFunds
+      .filter(f => f.monthBegin != null && f.yearBegin != null)
+      .map(f => {
+        const monthly   = f.y30    ?? 0;
+        const mgmtFee   = f.nihol  ?? 0;
+        const addRate   = f.hosafa ?? 0;
+        return {
+          name:                 f.fundName,
+          daily:                f['1day']      ?? 0,
+          from_start_of_month:  f.monthBegin,
+          from_start_of_year:   f.yearBegin,
+          monthly_return:       monthly,
+          management_fee:       mgmtFee,
+          addition_rate:        addRate,
+          net_monthly:          monthly - mgmtFee - addRate,
+          lastUpdate:           f.lastUpdate ?? null,
+        };
+      })
+      .sort((a, b) => {
+        const diff = b.net_monthly - a.net_monthly;
+        if (Math.abs(diff) > 1e-9) return diff;
+        return b.from_start_of_year - a.from_start_of_year;
+      });
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function fmt(n) { return (n ?? 0).toFixed(4); }
+
+  function renderTable(funds) {
+    const tbody = document.getElementById('fund-tbody');
+    const fragment = document.createDocumentFragment();
+
+    funds.forEach((f, i) => {
+      const tr = document.createElement('tr');
+
+      const netCls = f.net_monthly >  1e-9 ? 'pos'
+                   : f.net_monthly < -1e-9 ? 'neg'
+                   : 'zer';
+
+      const cells = [
+        { extra: 'col-rank', text: String(i + 1) },
+        { extra: 'col-name', text: f.name },
+        { extra: '',         text: fmt(f.daily) },
+        { extra: '',         text: fmt(f.from_start_of_month) },
+        { extra: '',         text: fmt(f.from_start_of_year) },
+        { extra: '',         text: fmt(f.monthly_return) },
+        { extra: '',         text: fmt(f.management_fee) },
+        { extra: '',         text: fmt(f.addition_rate) },
+        { extra: 'col-net ' + netCls, text: fmt(f.net_monthly) },
+      ];
+
+      cells.forEach(({ extra, text }) => {
+        const td = document.createElement('td');
+        if (extra) td.className = extra.trim();
+        td.textContent = text;
+        td.addEventListener('click', () => copyCell(td, text));
+        tr.appendChild(td);
+      });
+
+      fragment.appendChild(tr);
+    });
+
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+  }
+
+  function setLastUpdated(funds) {
+    // Find the most recent lastUpdate across all funds
+    const dates = funds
+      .map(f => f.lastUpdate)
+      .filter(Boolean)
+      .sort();
+    if (!dates.length) return;
+    const raw = dates[dates.length - 1]; // most recent YYYY-MM-DD
+    const parts = raw.split('-');
+    const display = parts.length === 3
+      ? parts[2] + '/' + parts[1] + '/' + parts[0]
+      : raw;
+    const el = document.getElementById('last-updated-label');
+    el.textContent = 'עודכן לאחרונה: ' + display;
+    el.classList.remove('hidden');
+  }
+
+  // ── Copy + toast ──────────────────────────────────────────────
+  function copyCell(td, value) {
+    navigator.clipboard.writeText(value).then(() => {
+      td.classList.add('flashing');
+      td.addEventListener('animationend', () => td.classList.remove('flashing'), { once: true });
+      showToast('הועתק: ' + value);
+    }).catch(() => showToast('ההעתקה נכשלה'));
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ── UI state ──────────────────────────────────────────────────
+  function setLoading(on) {
+    document.getElementById('refresh-btn').disabled = on;
+    document.getElementById('refresh-btn').classList.toggle('loading', on);
+  }
+
+  function showLoading() {
+    setLoading(true);
+    document.getElementById('status-area').classList.remove('hidden');
+    document.getElementById('error-box').classList.add('hidden');
+    document.getElementById('table-container').classList.add('hidden');
+  }
+
+  function showError(msg) {
+    setLoading(false);
+    document.getElementById('status-area').classList.add('hidden');
+    document.getElementById('error-box').classList.remove('hidden');
+    document.getElementById('error-msg').textContent = msg;
+  }
+
+  function showTable(funds) {
+    setLoading(false);
+    document.getElementById('status-area').classList.add('hidden');
+    document.getElementById('error-box').classList.add('hidden');
+    document.getElementById('table-container').classList.remove('hidden');
+    document.getElementById('fund-count').textContent =
+      funds.length + ' קרנות מוצגות';
+  }
+
+  // ── Entry point ───────────────────────────────────────────────
+  async function loadData() {
+    showLoading();
+    try {
+      const html  = await fetchHTML();
+      const raw   = extractKaspitData(html);
+      const funds = processData(raw.x);
+      if (!funds.length) throw new Error('לא נמצאו קרנות פעילות בנתוני המקור.');
+      setLastUpdated(funds);
+      renderTable(funds);
+      showTable(funds);
+    } catch (e) {
+      showError(e.message);
+    }
+  }
+
+  loadData();
+</script>
+</body>
+</html>
