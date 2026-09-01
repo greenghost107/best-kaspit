@@ -379,20 +379,24 @@
 
   // ── Config ────────────────────────────────────────────────────
   const SOURCE_URL = 'https://www.funder.co.il/kaspit';
+  // funder.co.il sends permissive CORS headers (Access-Control-Allow-Origin: *),
+  // so a direct fetch works and is tried first. The proxies below are only a
+  // fallback in case that ever changes or the direct request is blocked.
   const PROXIES = [
-    'https://corsproxy.io/?url=' + encodeURIComponent(SOURCE_URL),
     'https://api.allorigins.win/raw?url=' + encodeURIComponent(SOURCE_URL),
+    'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(SOURCE_URL),
   ];
   const FETCH_TIMEOUT_MS = 20000;
 
   // ── Fetch ─────────────────────────────────────────────────────
   async function fetchHTML() {
+    const urls = [SOURCE_URL, ...PROXIES];
     let lastErr;
-    for (const proxy of PROXIES) {
+    for (const url of urls) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
       try {
-        const res = await fetch(proxy, { signal: controller.signal });
+        const res = await fetch(url, { signal: controller.signal });
         clearTimeout(timer);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return await res.text();
@@ -402,7 +406,7 @@
       }
     }
     throw new Error(
-      'כל שרתי ה-proxy נכשלו. ייתכן שיש בעיית חסימה בדפדפן שלך. ' +
+      'כל נסיונות הטעינה נכשלו (חיבור ישיר וכל שרתי ה-proxy). ייתכן שיש בעיית חסימה בדפדפן שלך. ' +
       '(' + (lastErr?.message ?? 'שגיאה לא ידועה') + ')'
     );
   }
