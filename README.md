@@ -1,6 +1,6 @@
-# קרנות כספיות — השוואה
+# קרנות כספיות - השוואה
 
-A static, single-page web app that compares Israeli money market funds (קרנות כספיות) ranked by net monthly return after all fees. Deployed on GitHub Pages — no server, no backend, no build step.
+A static, single-page web app that compares Israeli money market funds (קרנות כספיות) ranked by net monthly return after all fees. Deployed on GitHub Pages - no server, no backend, no build step.
 
 Live site: `https://<your-username>.github.io/<repo-name>/`
 
@@ -38,7 +38,7 @@ Funds with missing `monthBegin` or `yearBegin` (expired or not-yet-active funds)
 
 ## How the data is fetched
 
-GitHub Pages serves only static files — there is no server to make backend requests. The page works around this using a **CORS proxy**:
+GitHub Pages serves only static files - there is no server to make backend requests. The page works around this using a **CORS proxy**:
 
 ```
 Browser → CORS proxy → funder.co.il/kaspit → HTML response → back to browser
@@ -59,16 +59,16 @@ The source page embeds all fund data as a JavaScript variable:
 var kaspitData = {"x": [ { fundNum, fundName, y30, nihol, hosafa, ... }, ... ]};
 ```
 
-The app locates this variable in the raw HTML by string index and parses the JSON slice directly — no DOM parsing, no file I/O, no caching.
+The app locates this variable in the raw HTML by string index and parses the JSON slice directly - no DOM parsing, no file I/O, no caching.
 
 ---
 
 ## UI features
 
-- **Last Updated** badge in the header — derived from the most recent `lastUpdate` field in the fund data
+- **Last Updated** badge in the header - derived from the most recent `lastUpdate` field in the fund data
 - **Net Monthly** column is colour-coded: green (positive), red (negative)
 - **Top 3 rows** have gold/silver/bronze accent borders on the Net Monthly cell
-- **Click any cell** to copy its value to the clipboard — a blue flash and toast notification confirm the copy
+- **Click any cell** to copy its value to the clipboard - a blue flash and toast notification confirm the copy
 - **Refresh button** re-fetches live data on demand
 - Horizontally scrollable table on small screens (mobile-friendly)
 - Full RTL Hebrew layout
@@ -79,7 +79,7 @@ The app locates this variable in the raw HTML by string index and parses the JSO
 
 ```
 best kaspit/
-├── index.html                  # Entire app — HTML, CSS, and JS in one file
+├── index.html                  # Entire app - HTML, CSS, and JS in one file
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Actions: auto-deploy to GitHub Pages on push to main
@@ -89,7 +89,7 @@ best kaspit/
 └── README.md
 ```
 
-No `package.json`, no `node_modules`, no build output — `index.html` is the artifact.
+No `package.json`, no `node_modules`, no build output - `index.html` is the artifact.
 
 ---
 
@@ -98,10 +98,10 @@ No `package.json`, no `node_modules`, no build output — `index.html` is the ar
 No install or build required. Open `index.html` directly in a browser:
 
 ```bash
-# Option 1 — direct file open (may block clipboard API in some browsers)
+# Option 1 - direct file open (may block clipboard API in some browsers)
 open index.html
 
-# Option 2 — simple local server (recommended, enables full clipboard support)
+# Option 2 - simple local server (recommended, enables full clipboard support)
 python -m http.server 8080
 # then visit http://localhost:8080
 ```
@@ -131,7 +131,7 @@ Then in the GitHub repo:
 
 1. Go to **Settings → Pages**
 2. Under **Source**, select **GitHub Actions**
-3. The workflow runs automatically — your site will be live within ~30 seconds
+3. The workflow runs automatically - your site will be live within ~30 seconds
 
 ### Subsequent deploys
 
@@ -173,14 +173,14 @@ Required repository permissions (set automatically by the workflow):
 - Some browser extensions (ad-blockers, privacy tools) may block requests to proxy domains. Try disabling them or opening in a private window.
 
 **Data looks stale**
-- The `lastUpdate` badge in the header shows the date of the underlying fund data. funder.co.il updates the data on trading days — weekends and holidays will show the last trading day.
+- The `lastUpdate` badge in the header shows the date of the underlying fund data. funder.co.il updates the data on trading days - weekends and holidays will show the last trading day.
 
 **Clipboard copy doesn't work**
 - The Clipboard API requires either HTTPS or `localhost`. Opening `index.html` as a `file://` URL disables it. Use the local server option above, or the live GitHub Pages URL.
 
 **GitHub Actions deploy fails**
 - Confirm **Settings → Pages → Source** is set to **GitHub Actions** (not a branch).
-- Check the Actions tab for the specific error — the most common cause is missing Pages permissions on a freshly created repo.
+- Check the Actions tab for the specific error - the most common cause is missing Pages permissions on a freshly created repo.
 
 ---
 

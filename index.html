@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>קרנות כספיות — השוואה</title>
+  <title>קרנות כספיות - השוואה</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -307,15 +307,15 @@
 <body>
 
 <header>
-  <h1>קרנות כספיות — <span class="accent">השוואה</span></h1>
+  <h1>קרנות כספיות - <span class="accent">השוואה</span></h1>
   <div class="header-right">
     <span id="funder-updated" class="updated-badge hidden">
       <span class="badge-label">עדכון אחרון של פאנדר:</span>
-      <span id="funder-updated-val">—</span>
+      <span id="funder-updated-val">-</span>
     </span>
     <span id="page-updated" class="updated-badge hidden">
       <span class="badge-label">העמוד עודכן:</span>
-      <span id="page-updated-val">—</span>
+      <span id="page-updated-val">-</span>
     </span>
     <button id="refresh-btn" onclick="loadData()">
       <span class="spin">⟳</span> רענן
@@ -460,7 +460,7 @@
 
       const cells = [
         { extra: 'col-rank', text: String(i + 1), copyVal: String(i + 1) },
-        { extra: 'col-name', text: f.name,         copyVal: String(f.fundNum), toastMsg: 'מספר קרן: ' + f.fundNum + ' — הועתק', title: 'מספר קרן: ' + f.fundNum + ' — לחץ להעתקה' },
+        { extra: 'col-name', text: f.name,         copyVal: String(f.fundNum), toastMsg: 'מספר קרן: ' + f.fundNum + ' - הועתק', title: 'מספר קרן: ' + f.fundNum + ' - לחץ להעתקה' },
         { extra: '',         text: fmt(f.daily) },
         { extra: '',         text: fmt(f.from_start_of_month) },
         { extra: '',         text: fmt(f.from_start_of_year) },
